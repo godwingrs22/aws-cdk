@@ -1,0 +1,36 @@
+# Handle integ test pipeline status
+
+name: handle-integ-test-pipeline-status
+on:
+  workflow_dispatch:
+    inputs:
+      commit_id:
+        description: 'The commit ID triggered from CodePipeline'
+        required: true
+      pipeline_state:
+        description: 'The state of the pipeline (success or failure)'
+        required: true
+
+jobs:
+  handle_status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Print inputs
+        run: |
+          echo "Commit ID: ${{ github.event.inputs.commit_id }}"
+          echo "Pipeline State: ${{ github.event.inputs.pipeline_state }}"
+      
+      # Add steps to handle the status or take actions based on the state
+      - name: Fail on integ-test-pipeline failure
+        if: ${{ github.event.inputs.pipeline_state == 'failure' }}
+        run: |
+          echo "Integ-test Pipeline failed. Marking workflow as failed."
+          exit 1  # This will fail the workflow
+        
+      - name: Notify on success
+        if: ${{ github.event.inputs.pipeline_state == 'success' }}
+        run: |
+          echo "Pipeline succeeded"

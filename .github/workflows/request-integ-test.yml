@@ -1,4 +1,4 @@
-# Request a deployment to the integ test pipeline
+# Request a deployment to the integ test branch
 
 name: request-integ-test
 on:
@@ -42,10 +42,10 @@ jobs:
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b
         with:
           message: |
-            :arrow_right: **PR build request submitted to `test-main-pipeline`** :arrow_left:
+            :arrow_right: **Integ test deployment request submitted to `integ-test-pipeline`** :arrow_left:
 
-            A maintainer must now check the pipeline and add the `pr-linter/cli-integ-tested` label once the pipeline succeeds.
-          comment-tag: request-cli-integ-test
+            A maintainer must now check the pipeline and add the `pr-linter/integ-test-checked` label once the pipeline succeeds.
+          comment-tag: request-integ-test
           mode: recreate
           # Post as our automation user
           github-token: ${{ secrets.PROJEN_GITHUB_TOKEN }}
