@@ -1,0 +1,53 @@
+# Request a deployment to the integ test pipeline
+
+name: request-integ-test
+on:
+  pull_request_target: {}
+
+jobs:
+  submit-to-integ-test-pipeline:
+    environment: integ-test-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Needs to run with PROJEN_GITHUB_TOKEN because we need permissions to force push the branch
+          token: ${{ secrets.PROJEN_GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: Push to test branch
+        run: |
+          git config --global user.name 'aws-cdk-automation'
+          git config --global user.email 'aws-cdk-automation@users.noreply.github.com'
+          git push --force --atomic https://github.com/${{ github.repository }}.git FETCH_HEAD:integ-test-pipeline
+
+          # Test branch for the PR using the format 'integ-test/pr-{pr_number}'
+          BRANCH_NAME="integ-test/pr-${{ github.event.pull_request.number }}"
+
+          # Check if the branch already exists in the repository
+          git fetch origin
+          
+          # Check if the branch exists
+          if git rev-parse --verify "origin/$BRANCH_NAME"; then
+            echo "Branch $BRANCH_NAME exists, pushing to it."
+          else
+            echo "Branch $BRANCH_NAME does not exist, creating it."
+            git checkout -b $BRANCH_NAME
+            git push --set-upstream origin $BRANCH_NAME
+          fi
+
+          # Push FETCH_HEAD to the newly created branch
+          git push --force --atomic https://github.com/${{ github.repository }}.git FETCH_HEAD:$BRANCH_NAME
+
+      - name: Explain next steps
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b
+        with:
+          message: |
+            :arrow_right: **PR build request submitted to `test-main-pipeline`** :arrow_left:
+
+            A maintainer must now check the pipeline and add the `pr-linter/cli-integ-tested` label once the pipeline succeeds.
+          comment-tag: request-cli-integ-test
+          mode: recreate
+          # Post as our automation user
+          github-token: ${{ secrets.PROJEN_GITHUB_TOKEN }}
