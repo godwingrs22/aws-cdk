@@ -10,6 +10,12 @@ on:
       pipeline_state:
         description: 'The state of the pipeline (success or failure)'
         required: true
+      pr_number:
+        description: 'The PR number to update check status'
+        required: true
+      ref:
+        description: 'The ref of the branch that was tested'
+        required: true
 
 jobs:
   handle_status:
@@ -34,3 +40,13 @@ jobs:
         if: ${{ github.event.inputs.pipeline_state == 'success' }}
         run: |
           echo "Pipeline succeeded"
+      
+      - name: Add status check to the PR
+        run: |
+          echo "Adding check status to PR #${{ github.event.inputs.pr_number }}"
+
+          # Use GitHub API to update the commit status (this will link the status to the PR)
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
+            -d '{"state": "${{ github.event.inputs.pipeline_state }}", "description": "Pipeline status", "context": "ci/integ-test", "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.inputs.commit_id }}"
