@@ -39,21 +39,6 @@ jobs:
             git push --set-upstream origin $BRANCH_NAME
           fi
 
-      - name: Create Check Run on PR Source Branch
-        id: create_check_run
-        run: |
-          # Create a GitHub check run on the source branch (the branch from which PR is created)
-          curl -X POST -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{
-                "name": "Integ Test Deployment Status",
-                "head_sha": "${{ github.event.pull_request.head.sha }}",  # PR source branch commit ID
-                "status": "in_progress",  # Initial status of the check run
-                "external_id": "pipeline-${{ github.event.pull_request.number }}",
-                "context": "CI/CD Pipeline"
-            }' \
-            "https://api.github.com/repos/${{ github.repository }}/check-runs"
-
       - name: Explain next steps
         uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b
         with:
