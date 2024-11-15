@@ -2,6 +2,11 @@
 
 name: handle-integ-test-pipeline-status
 on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
   workflow_dispatch:
     inputs:
       commit_id:
@@ -23,7 +28,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
+      - name: Update GitHub Status as Pending
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          echo "Setting initial pending status for integ-test-status."
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
+            -d '{"state": "pending", "description": "Waiting for pipeline result", "context": "integ-test-status", "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }}"
+
       # Add steps to handle the status or take actions based on the state
       - name: Update GitHub Status on Failure
         if: ${{ github.event.inputs.pipeline_state == 'failure' }}
@@ -32,7 +46,7 @@ jobs:
 
           curl -X POST \
             -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
-            -d '{"state": "${{ github.event.inputs.pipeline_state }}", "description": "Pipeline status", "context": "ci/integ-test", "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            -d '{"state": "${{ github.event.inputs.pipeline_state }}", "description": "Pipeline status", "context": "integ-test-status", "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.inputs.commit_id }}"         
 
         
@@ -43,5 +57,5 @@ jobs:
 
           curl -X POST \
             -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
-            -d '{"state": "${{ github.event.inputs.pipeline_state }}", "description": "Pipeline status", "context": "ci/integ-test", "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            -d '{"state": "${{ github.event.inputs.pipeline_state }}", "description": "Pipeline status", "context": "integ-test-status", "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.inputs.commit_id }}"         
