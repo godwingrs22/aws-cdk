@@ -29,24 +29,42 @@ jobs:
           echo "Commit ID: ${{ github.event.inputs.commit_id }}"
           echo "Pipeline State: ${{ github.event.inputs.pipeline_state }}"
       
-      # Add steps to handle the status or take actions based on the state
-      - name: Fail on integ-test-pipeline failure
-        if: ${{ github.event.inputs.pipeline_state == 'failure' }}
-        run: |
-          echo "Integ-test Pipeline failed. Marking workflow as failed."
-          exit 1  # This will fail the workflow
-        
-      - name: Notify on success
+      - name: Update GitHub Status on Success
         if: ${{ github.event.inputs.pipeline_state == 'success' }}
         run: |
-          echo "Pipeline succeeded"
-      
-      - name: Add status check to the PR
-        run: |
-          echo "Adding check status to PR #${{ github.event.inputs.pr_number }}"
+          echo "Pipeline succeeded, updating GitHub status to success."
+          curl -X PATCH -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{
+                "state": "success",
+                "target_url": "https://example.com",
+                "description": "CI pipeline succeeded",
+                "context": "CI/CD Pipeline"
+            }' \
+            "https://api.github.com/repos/${{ github.repository }}/check-runs/${{ github.event.inputs.pr_number }}"
 
-          # Use GitHub API to update the commit status (this will link the status to the PR)
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
-            -d '{"state": "${{ github.event.inputs.pipeline_state }}", "description": "Pipeline status", "context": "ci/integ-test", "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
-            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.inputs.commit_id }}"
+      - name: Update GitHub Status on Failure
+        if: ${{ github.event.inputs.pipeline_state == 'failure' }}
+        run: |
+          echo "Pipeline failed, updating GitHub status to failure."
+          curl -X PATCH -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{
+                "state": "failure",
+                "target_url": "https://example.com",
+                "description": "CI pipeline failed",
+                "context": "CI/CD Pipeline"
+            }' \
+            "https://api.github.com/repos/${{ github.repository }}/check-runs/${{ github.event.inputs.pr_number }}"
+
+          exit 1  # Fail the workflow if the pipeline failed
+
+      # - name: Add status check to the PR
+      #   run: |
+      #     echo "Adding check status to PR #${{ github.event.inputs.pr_number }}"
+
+      #     # Use GitHub API to update the commit status (this will link the status to the PR)
+      #     curl -X POST \
+      #       -H "Authorization: token ${{ secrets.PROJEN_GITHUB_TOKEN }}" \
+      #       -d '{"state": "${{ github.event.inputs.pipeline_state }}", "description": "Pipeline status", "context": "ci/integ-test", "target_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+      #       "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.inputs.commit_id }}"
