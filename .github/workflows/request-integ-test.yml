@@ -12,7 +12,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Needs to run with PROJEN_GITHUB_TOKEN because we need permissions to force push the branch
           token: ${{ secrets.PROJEN_GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}

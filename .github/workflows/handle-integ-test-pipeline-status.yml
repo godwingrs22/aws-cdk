@@ -15,12 +15,6 @@ on:
       pipeline_state:
         description: 'The state of the pipeline (success or failure)'
         required: true
-      pr_number:
-        description: 'The PR number to update check status'
-        required: true
-      ref:
-        description: 'The ref of the branch that was tested'
-        required: true
 
 jobs:
   handle_status:
