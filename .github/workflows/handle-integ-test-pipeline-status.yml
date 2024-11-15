@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Update GitHub Status as Pending
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request_target' }}
         run: |
           echo "Setting initial pending status for integ-test-status."
           curl -X POST \
