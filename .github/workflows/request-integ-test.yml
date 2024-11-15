@@ -32,7 +32,7 @@ jobs:
           if git branch -r | grep "origin/$BRANCH_NAME"; then
             echo "Branch $BRANCH_NAME exists, pushing to it."
             # Push FETCH_HEAD to the existing test branch
-            git push --force --atomic https://github.com/${{ github.repository }}.git FETCH_HEAD:$BRANCH_NAME
+            git push --force --atomic https://github.com/${{ github.repository }}.git ${{ github.event.pull_request.head.sha }}:$BRANCH_NAME
           else
             echo "Branch $BRANCH_NAME does not exist, creating and pushing it."
             git checkout -b $BRANCH_NAME
