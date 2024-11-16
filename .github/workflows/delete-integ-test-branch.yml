@@ -1,0 +1,40 @@
+# Delete the integ-test/pr-* branch once the PR is closed
+
+name: delete-integ-test-branch
+on:
+  pull_request_target:
+    types:
+      - closed
+
+jobs:
+  delete-integ-test-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PROJEN_GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      
+      - name: Delete the test branch after PR is merged or closed
+        if: github.event.pull_request.merged == true || github.event.pull_request.state == 'closed'
+        run: |
+          # Test branch for the PR using the format 'integ-test/pr-{pr_number}'
+          BRANCH_NAME="integ-test/pr-${{ github.event.pull_request.number }}"
+
+          # Fetch the latest branches from the remote
+          git fetch origin
+
+          # Check if the branch exists on the remote
+          if git branch -r | grep "origin/$BRANCH_NAME"; then
+            echo "Branch $BRANCH_NAME exists, deleting it."
+
+            # Delete the branch remotely on GitHub
+            git push origin --delete $BRANCH_NAME
+
+            # Optionally, delete the branch locally (useful for keeping the local repo clean)
+            git branch -D $BRANCH_NAME
+          else
+            echo "Branch $BRANCH_NAME does not exist on remote, skipping deletion."
+          fi
