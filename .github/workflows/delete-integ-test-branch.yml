@@ -32,9 +32,6 @@ jobs:
 
             # Delete the branch remotely on GitHub
             git push origin --delete $BRANCH_NAME
-
-            # Optionally, delete the branch locally (useful for keeping the local repo clean)
-            git branch -D $BRANCH_NAME
           else
             echo "Branch $BRANCH_NAME does not exist on remote, skipping deletion."
           fi
